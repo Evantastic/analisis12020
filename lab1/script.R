@@ -1,11 +1,13 @@
 library(ggplot2)
 
 # Leemos los datos
-filename <- "~/universidad/analisis/lab1/expanded"
+filename <- "~/universidad/analisis/expanded"
+edible_class <- "EDIBLE"
+poisonous_class <- "POISONOUS"
 mushrooms <- read.table(filename,header=TRUE,sep=",")
 # Separamos los datos en clases comestibles y venenosos
-edible <- mushrooms[ which(mushrooms$class=='EDIBLE'),]
-poisonous <- mushrooms[ which(mushrooms$class=='POISONOUS'),]
+edible <- mushrooms[ which(mushrooms$class==edible_class),]
+poisonous <- mushrooms[ which(mushrooms$class==poisonous_class),]
 # Eliminamos una variable que resulta que no se usara
 poisonous$class <- NULL
 edible$class <- NULL
@@ -24,8 +26,8 @@ for (i in 1:length(names)) {
   edible_attribute$percent = round(100*edible_attribute$Freq/n_edible, digits=2)
   poisonous_attribute$percent = round(100*poisonous_attribute$Freq/n_poisonous, digits=2)
   # Agregamos las clases comestible y venenoso
-  edible_attribute$class <- "EDIBLE"
-  poisonous_attribute$class <- "POISONOUS"
+  edible_attribute$class <- edible_class
+  poisonous_attribute$class <- poisonous_class
   # Creamos la tabla de contingencia
   contingency_table <- rbind(edible_attribute,poisonous_attribute)
   # Eliminamos el atributo de frequencia
