@@ -1,22 +1,27 @@
 library(ggplot2)
 
 # Leemos los datos
-filename <- "~/universidad/analisis/expanded"
+filename <- "expanded"
 edible_class <- "EDIBLE"
 poisonous_class <- "POISONOUS"
 mushrooms <- read.table(filename,header=TRUE,sep=",")
+
 # Separamos los datos en clases comestibles y venenosos
 edible <- mushrooms[ which(mushrooms$class==edible_class),]
 poisonous <- mushrooms[ which(mushrooms$class==poisonous_class),]
+
 # Eliminamos una variable que resulta que no se usara
 poisonous$class <- NULL
 edible$class <- NULL
+
 # Obtenemos la cantidad de datos por clase y el total
 n_edible <- nrow(edible)
 n_poisonous <-nrow(poisonous)
+
 # Obtenemos el nombre de los atributos y le restamos el atributo class
 names <- colnames(mushrooms)
 names <- names[-1]
+
 # Creamos la tabla de contingencia class vs atributo, para todo atributo que no seas class
 for (i in 1:length(names)) {
   # Obtenemos las tablas de frequencias de cada clase
@@ -45,3 +50,26 @@ for (i in 1:length(names)) {
   # Se imprime el grafico
   print(plot)
 }
+
+# Se aplica cada regla por separado sobre el conjunto total de datos
+#Rule 1
+rule1 <- mushrooms[ which(mushrooms$odor != "ALMOND" & mushrooms$odor != "ANISE" & mushrooms$odor != "NONE"),]
+#Rule 2
+rule2 <- mushrooms[ which(mushrooms$spore.print.color == "GREEN"),]
+#Rule 3
+rule3 <- mushrooms[ which(mushrooms$odor == "NONE" & 
+                          mushrooms$stalk.surface.below.ring == "SCALY" & 
+                          mushrooms$stalk.color.above.ring != "BROWN"),]
+
+#Se aplican las reglas juntas una sobre otra
+rules.step.1 <- mushrooms[ which(mushrooms$odor == "ALMOND" | mushrooms$odor == "ANISE" | mushrooms$odor == "NONE"),]
+#Rule 2
+rules.step.2 <- rules.step.1[ which(rules.step.1$spore.print.color != "GREEN"),]
+#Rule 3
+rules.step.3 <- rules.step.2[ which(rules.step.2$odor != "NONE" | 
+                                 rules.step.2$stalk.surface.below.ring != "SCALY" | 
+                                 rules.step.2$stalk.color.above.ring == "BROWN"),]
+
+#Tabla de contingencia de las pruebas con las reglas combinadas
+contingency_table_test <- table(rules.step.3$class)
+
