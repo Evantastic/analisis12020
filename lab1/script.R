@@ -23,6 +23,7 @@ names <- colnames(mushrooms)
 names <- names[-1]
 
 # Creamos la tabla de contingencia class vs atributo, para todo atributo que no seas class
+
 for (i in 1:length(names)) {
   # Obtenemos las tablas de frequencias de cada clase
   edible_attribute <- as.data.frame(table(edible[i]))
@@ -51,25 +52,33 @@ for (i in 1:length(names)) {
   print(plot)
 }
 
-# Se aplica cada regla por separado sobre el conjunto total de datos
-#Rule 1
-rule1 <- mushrooms[ which(mushrooms$odor != "ALMOND" & mushrooms$odor != "ANISE" & mushrooms$odor != "NONE"),]
-#Rule 2
-rule2 <- mushrooms[ which(mushrooms$spore.print.color == "GREEN"),]
-#Rule 3
-rule3 <- mushrooms[ which(mushrooms$odor == "NONE" & 
-                          mushrooms$stalk.surface.below.ring == "SCALY" & 
-                          mushrooms$stalk.color.above.ring != "BROWN"),]
+#Función para aplicar las reglas
+apply_rules <- function(data){
+  rules.step.1 <- data[ which(data$odor == "ALMOND" | 
+                              data$odor == "ANISE" | 
+                              data$odor == "NONE"),]
+  #Rule 2
+  rules.step.2 <- rules.step.1[ which(rules.step.1$spore.print.color != "GREEN"),]
+  #Rule 3
+  rules.step.3 <- rules.step.2[ which(rules.step.2$odor != "NONE" | 
+                                      rules.step.2$stalk.surface.below.ring != "SCALY" | 
+                                      rules.step.2$stalk.color.above.ring == "BROWN"),]
+  rules.step.3
+}
 
-#Se aplican las reglas juntas una sobre otra
-rules.step.1 <- mushrooms[ which(mushrooms$odor == "ALMOND" | mushrooms$odor == "ANISE" | mushrooms$odor == "NONE"),]
-#Rule 2
-rules.step.2 <- rules.step.1[ which(rules.step.1$spore.print.color != "GREEN"),]
-#Rule 3
-rules.step.3 <- rules.step.2[ which(rules.step.2$odor != "NONE" | 
-                                 rules.step.2$stalk.surface.below.ring != "SCALY" | 
-                                 rules.step.2$stalk.color.above.ring == "BROWN"),]
+poisonous.rules <- apply_rules(poisonous)
+n_poisonous.not.satisfy.rules <- nrow(poisonous.rules)
+n_poisonous.satisfy.rules <- n_poisonous - n_poisonous.not.satisfy.rules
 
-#Tabla de contingencia de las pruebas con las reglas combinadas
-contingency_table_test <- table(rules.step.3$class)
+edible.rules <- apply_rules(edible)
+n_edible.not.satisfy.rules <- nrow(edible.rules)
+n_edible.satisfy.rules <- n_edible - n_edible.not.satisfy.rules
+
+#Tabla de contingencia para resumir los resultados de las pruebas aplicadas
+test.results <- data.frame(Pruebas = factor(c("No cumplen reglas","Cumplen reglas")), 
+                      Comestibles = c(n_edible.not.satisfy.rules, n_edible.satisfy.rules), 
+                      Venenosos = c(n_poisonous.not.satisfy.rules, n_poisonous.satisfy.rules))
+
+
+
 
