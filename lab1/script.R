@@ -1,84 +1,69 @@
 library(ggplot2)
 
+# Establecemos algunas constantes
+filename                       <- "expanded"
+edible.class                   <- "EDIBLE"
+poisonous.class                <- "POISONOUS"
+odor.almond                    <- "ALMOND"
+odor.anise                     <- "ANISE"
+odor.none                      <- "NONE"
+
 # Leemos los datos
-filename <- "expanded"
-edible_class <- "EDIBLE"
-poisonous_class <- "POISONOUS"
-mushrooms <- read.table(filename,header=TRUE,sep=",")
+mushrooms <- read.table(filename, header = TRUE, sep = ",")
+
+# Estilo de los graficos
+mynamestheme <- theme(plot.title = element_text(family = "Helvetica", face = "bold", size = (15), hjust = 0.5), 
+                      legend.title = element_text(colour = "steelblue",  face = "bold.italic", family = "Helvetica"), 
+                      legend.text = element_text(face = "italic", colour="steelblue4",family = "Helvetica"), 
+                      axis.title = element_text(family = "Helvetica", size = (10), colour = "steelblue4"),
+                      axis.text = element_text(family = "Courier", colour = "cornflowerblue", size = (10)))
+
+# Grafico de aroma segun comestibilidad
+plot <- ggplot(mushrooms, aes(x = class, fill = odor)) +
+  geom_bar(position = "fill") +
+  labs(y = "Proporcion", x = "Comestibilidad", fill = "Aroma") +
+  ggtitle("Proporcion de aroma segun comestibilidad") +
+  mynamestheme
+print(plot)
+
+# Grafico de color de las esporas segun comestibilidad
+plot <- ggplot(mushrooms, aes(x = class, fill = spore.print.color)) +
+  geom_bar(position = "fill") +
+  labs(y = "Proportion", x = "Comestibilidad", fill = "Color de las esporas") +
+  ggtitle("Proporcion de color de las esporas segun comestibilidad") +
+  mynamestheme
+print(plot)
+
+# Función para aplicar la 1era regla negada
+get.n.after.rules <- function(data, n){
+  rules.step.1        <- data[which(data$odor == odor.almond |
+                                    data$odor == odor.anise |
+                                    data$odor == odor.none),]
+  n.not.satisfy.rules <- nrow(rules.step.1)
+  n.satisfy.rules     <- n - n.not.satisfy.rules
+  n.satisfy.rules
+}
 
 # Separamos los datos en clases comestibles y venenosos
-edible <- mushrooms[ which(mushrooms$class==edible_class),]
-poisonous <- mushrooms[ which(mushrooms$class==poisonous_class),]
+edible      <- mushrooms[which(mushrooms$class==edible.class),]
+poisonous   <- mushrooms[which(mushrooms$class==poisonous.class),]
+n.edible    <- nrow(edible)
+n.poisonous <- nrow(poisonous)
 
-# Eliminamos una variable que resulta que no se usara
-poisonous$class <- NULL
-edible$class <- NULL
+n.poisonous.satisfy.rules <- get.n.after.rules(poisonous, n.poisonous)
+n.edible.satisfy.rules    <- get.n.after.rules(edible, n.edible)
 
-# Obtenemos la cantidad de datos por clase y el total
-n_edible <- nrow(edible)
-n_poisonous <-nrow(poisonous)
+# Tabla de contingencia para resumir los resultados de las pruebas aplicadas
+test.results <- matrix(c(n.edible.satisfy.rules, n.poisonous.satisfy.rules,
+                         n.edible - n.edible.satisfy.rules, n.poisonous - n.poisonous.satisfy.rules),
+                       ncol = 2,
+                       byrow = TRUE)
+colnames(test.results) <- c("Comestibles", "Venenosos")
+rownames(test.results) <- c("Cumplen la regla", "No cumplen la regla")
 
-# Obtenemos el nombre de los atributos y le restamos el atributo class
-names <- colnames(mushrooms)
-names <- names[-1]
+# Prueba exacta de Fisher
+# Hipotesis nula: Los 3 olores en especifo (ningunom, anis, almendra) no determinan la comestibilidad de un hongo. Las variables son indepenedientes
+# Hipotesis alternativa: Los 3 olores en especifo(ninguno, anis, almendra) determinan la comestibilidad de un hongo. Las variables no son independientes
 
-# Creamos la tabla de contingencia class vs atributo, para todo atributo que no seas class
-
-for (i in 1:length(names)) {
-  # Obtenemos las tablas de frequencias de cada clase
-  edible_attribute <- as.data.frame(table(edible[i]))
-  poisonous_attribute <- as.data.frame(table(poisonous[i]))
-  # Calculamos los porcentaje dadas las frequencias
-  edible_attribute$percent = round(100*edible_attribute$Freq/n_edible, digits=2)
-  poisonous_attribute$percent = round(100*poisonous_attribute$Freq/n_poisonous, digits=2)
-  # Agregamos las clases comestible y venenoso
-  edible_attribute$class <- edible_class
-  poisonous_attribute$class <- poisonous_class
-  # Creamos la tabla de contingencia
-  contingency_table <- rbind(edible_attribute,poisonous_attribute)
-  # Eliminamos el atributo de frequencia
-  contingency_table$Freq <- NULL
-  
-  # Creamos un doble grafico de torta para cada atributo
-  plot <- ggplot(contingency_table, aes(x="", y=percent, group=Var1, color=Var1, fill=Var1)) +
-    geom_bar(width = 1, stat = "identity", color="white") +
-    coord_polar("y", start=0) +
-    facet_wrap(~ class) +
-    theme(axis.text = element_blank(), axis.ticks = element_blank(), panel.grid  = element_blank()) +
-    xlab("") +
-    ylab("") +
-    labs(fill=names[i])
-  # Se imprime el grafico
-  print(plot)
-}
-
-#Función para aplicar las reglas
-apply_rules <- function(data){
-  rules.step.1 <- data[ which(data$odor == "ALMOND" | 
-                              data$odor == "ANISE" | 
-                              data$odor == "NONE"),]
-  #Rule 2
-  rules.step.2 <- rules.step.1[ which(rules.step.1$spore.print.color != "GREEN"),]
-  #Rule 3
-  rules.step.3 <- rules.step.2[ which(rules.step.2$odor != "NONE" | 
-                                      rules.step.2$stalk.surface.below.ring != "SCALY" | 
-                                      rules.step.2$stalk.color.above.ring == "BROWN"),]
-  rules.step.3
-}
-
-poisonous.rules <- apply_rules(poisonous)
-n_poisonous.not.satisfy.rules <- nrow(poisonous.rules)
-n_poisonous.satisfy.rules <- n_poisonous - n_poisonous.not.satisfy.rules
-
-edible.rules <- apply_rules(edible)
-n_edible.not.satisfy.rules <- nrow(edible.rules)
-n_edible.satisfy.rules <- n_edible - n_edible.not.satisfy.rules
-
-#Tabla de contingencia para resumir los resultados de las pruebas aplicadas
-test.results <- data.frame(Pruebas = factor(c("No cumplen reglas","Cumplen reglas")), 
-                      Comestibles = c(n_edible.not.satisfy.rules, n_edible.satisfy.rules), 
-                      Venenosos = c(n_poisonous.not.satisfy.rules, n_poisonous.satisfy.rules))
-
-
-
-
+test <- fisher.test(test.results)
+print(test)
