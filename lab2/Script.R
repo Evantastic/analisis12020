@@ -20,11 +20,15 @@ personal.theme <- theme(plot.title = element_text(family = "Helvetica", face = "
 
 # Leemos los datos
 mushrooms <- read.table(url, header = TRUE, sep = ",")
+original <- mushrooms
 # Eliminamos atributo innecesario (solo tiene un valor posible)
 mushrooms$veil.type <- NULL
 # Eliminamos las filas con datos faltantes
 #mushrooms <- mushrooms[which(mushrooms$stalk.root != '?'),]
+# Eliminamos la clse
+mushrooms$class <- NULL
 
+# Imputacion de datos
 #init = mice(mushrooms, maxit=0) 
 #meth = init$method
 #predM = init$predictorMatrix
@@ -49,45 +53,32 @@ fviz_mca_var(res.mca, choice = "mca.cor", repel = TRUE) +
   ggtitle("Variables MCA") +
   personal.theme
 
-#muestra las 15 principales categorías variables que contribuyen a las dimensiones:
-#fviz_contrib(res.mca, choice = "var", axes = 1, top = 15) +
-#  ggtitle("Contribucion a la dimension 1") +
-#  personal.theme
-#fviz_contrib(res.mca, choice = "var", axes = 2, top = 15) + 
-#  ggtitle("Contribucion a la dimension 2") +
-#  personal.theme
-
-#fviz_mca_var(res.mca, col.var = "contrib",
-#             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-#             repel = TRUE) +
-#  ggtitle("Variables Dummy MCA") +
-#  personal.theme
-
-# Se agrupan datos con 2 hasta 8 clusters
-#sil.width <- c(NA)
-#for (i in 2:22) {
-#  pam.fit <- pam(mushrooms, k = i)
-#  sil.width[i] <- pam.fit$silinfo$avg.width
-#}
+# Se agrupan datos con 2 hasta 22 clusters
+sil.width <- c(NA)
+for (i in 2:22) {
+  pam.fit <- pam(mushrooms, k = i)
+  sil.width[i] <- pam.fit$silinfo$avg.width
+}
 # Se grafica el ancho promedio de las siluetas de los clusters
-#df <- data.frame(silhouette = sil.width,
-#                 clusters = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22))
-#plot <- ggplot(data = df, aes(x = clusters, y = silhouette, group = 1)) +
-#  geom_line(linetype = "dashed") +
-#  geom_point() +
-#  ggtitle("Silueta media vs cantidad de clusters") +
-#  personal.theme
-# Maximizando el ancho de siluetas, el numero de clusters optimo son 3 y 22
+df <- data.frame(silhouette = sil.width,
+                 clusters = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22))
+plot <- ggplot(data = df, aes(x = clusters, y = silhouette, group = 1)) +
+  geom_line(linetype = "dashed") +
+  geom_point() +
+  ggtitle("Silueta media vs cantidad de clusters") +
+  personal.theme
+# Maximizando el ancho de siluetas, el numero de clusters optimo es 2
 
 # Se calcula el cluster en base al numero optimo de clusters segun el ancho de siluetas
-pam <- pam(mushrooms, k = 3)
-# Se agrega el atributo cluster al dataframe
-mushrooms <- cbind(mushrooms, cluster = pam$cluster)
+pam <- pam(mushrooms, k = 2)
 
 fviz_cluster(pam) + personal.theme
 
-#ggplot(mushrooms, aes(x = cluster, fill = class)) +
-#  geom_bar(position = "fill") +
-#  labs(y = "Proporcion", x = "Comestibilidad", fill = "Aroma") +
-#  ggtitle("Proporcion de aroma segun comestibilidad") +
-#  personal.theme
+# Se agrega el atributo cluster al dataframe
+mushrooms <- cbind(mushrooms, cluster = pam$cluster, class = original$class)
+
+ggplot(mushrooms, aes(x = cluster, fill = class)) +
+  geom_bar(position = "fill") +
+  labs(y = "Proporcion", x = "Cluster", fill = "Clase") +
+  ggtitle("Proporcion de clase dentro de los clusters") +
+  personal.theme
