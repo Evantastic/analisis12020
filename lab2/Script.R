@@ -54,19 +54,19 @@ fviz_mca_var(res.mca, choice = "mca.cor", repel = TRUE) +
   personal.theme
 
 # Se agrupan datos con 2 hasta 22 clusters
-sil.width <- c(NA)
-for (i in 2:22) {
-  pam.fit <- pam(mushrooms, k = i)
-  sil.width[i] <- pam.fit$silinfo$avg.width
-}
+#sil.width <- c(NA)
+#for (i in 2:22) {
+#  pam.fit <- pam(mushrooms, k = i)
+#  sil.width[i] <- pam.fit$silinfo$avg.width
+#}
 # Se grafica el ancho promedio de las siluetas de los clusters
-df <- data.frame(silhouette = sil.width,
-                 clusters = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22))
-plot <- ggplot(data = df, aes(x = clusters, y = silhouette, group = 1)) +
-  geom_line(linetype = "dashed") +
-  geom_point() +
-  ggtitle("Silueta media vs cantidad de clusters") +
-  personal.theme
+#df <- data.frame(silhouette = sil.width,
+#                 clusters = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22))
+#ggplot(data = df, aes(x = clusters, y = silhouette, group = 1)) +
+#  geom_line(linetype = "dashed") +
+#  geom_point() +
+#  ggtitle("Silueta media vs cantidad de clusters") +
+#  personal.theme
 # Maximizando el ancho de siluetas, el numero de clusters optimo es 2
 
 # Se calcula el cluster en base al numero optimo de clusters segun el ancho de siluetas
@@ -82,3 +82,23 @@ ggplot(mushrooms, aes(x = cluster, fill = class)) +
   labs(y = "Proporcion", x = "Cluster", fill = "Clase") +
   ggtitle("Proporcion de clase dentro de los clusters") +
   personal.theme
+
+# Tamano de los clusters
+table(mushrooms$c)
+
+# Datos para la matriz de confusion
+tp <- 1737
+fp <- 276
+fn <- 2179
+tn <- 3932
+# Matriz de confusion para resumir los resultados de las pruebas aplicadas tiene la siguiente forma
+#                          Venenosos Comestibles
+# Venenosos(Predichos)        tp        fp
+# Comestibles(Predichos)      fn        tn
+confusion.matrix <- matrix(c(tp, fp, fn, tn),
+                           ncol = 2,
+                           byrow = TRUE)
+colnames(confusion.matrix) <- c("Venenosos", "Comestibles")
+rownames(confusion.matrix) <- c("Venenosos (Predicho)", "Comestibles (Predicho)")
+cat("Matriz de confusion", "\n")
+print(confusion.matrix)
