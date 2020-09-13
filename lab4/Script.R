@@ -26,3 +26,13 @@ tree.rules = C5.0(x = training.set[, -20], y = training.set$class, rules = T)
 tree.pred.class = predict(tree, test.set[,-20], type = "class")
 tree.pred.prob = predict(tree, test.set[,-20], type = "prob")
 
+#Para la consola
+#tree.pred.class
+#head(tree.pred.prob)
+#plot(tree)
+#summary(tree)
+#summary(tree.rules)
+#conf.matrix.tree = confusionMatrix(table(test.set$class, tree.pred.class))
+#print(conf.matrix.tree)
+
+
